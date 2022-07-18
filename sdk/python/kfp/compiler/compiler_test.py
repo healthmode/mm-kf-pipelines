@@ -803,6 +803,30 @@ class TestCompileComponent(parameterized.TestCase):
             pipeline_spec['root']['inputDefinitions']['parameters']['text']
             ['defaultValue'], 'override_string')
 
+    def test_compile_container_component_simple(self):
+
+        @dsl.container_component
+        def hello_world_container() -> dsl.ContainerSpec:
+            """Hello world component."""
+            return dsl.ContainerSpec(
+                image='python:3.7',
+                command=['echo', 'hello world'],
+                args=[],
+            )
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            output_json = os.path.join(tempdir, 'component.yaml')
+            compiler.Compiler().compile(
+                pipeline_func=hello_world_container,
+                package_path=output_json,
+                pipeline_name='hello-world-container')
+            with open(output_json, 'r') as f:
+                pipeline_spec = yaml.safe_load(f)
+        self.assertEqual(
+            pipeline_spec['deploymentSpec']['executors']
+            ['exec-hello-world-container']['container']['command'],
+            ['echo', 'hello world'])
+
 
 class TestCompileBadInput(unittest.TestCase):
 
